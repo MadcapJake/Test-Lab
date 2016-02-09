@@ -1,0 +1,12 @@
+{
+  "name"        : "Test::Lab",
+  "version"     : "0.1.0",
+  "description" : "Test run refactored code against legacy code",
+  "provides"    : {
+    "Test::Lab"             : "lib/Test/Lab.pm6",
+    "Test::Lab::Experiment" : "lib/Test/Lab/Experiment.pm6"
+  },
+  "depends"     : [],
+  "source-type" : "git",
+  "source-url"  : "git://github.com/MadcapJake/Test-Lab.git"
+}
