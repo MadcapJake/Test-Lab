@@ -158,7 +158,7 @@ class Test::Lab::Experiment {
         :experiment(self),
         :&block);
     }
-    my $control = @observations.first: *.name eq $name;
+    my $control = @observations.first: *.name eq n;
 
     my \result = Test::Lab::Result.new(
       :experiment(self),
@@ -204,7 +204,7 @@ class Test::Lab::Experiment {
   #| Register a named behavior for this experiment
   method try(&sub, :$name = "candidate") {
     if %!behaviors{$name}.defined {
-      die X::Test::Lab::BehaviorNotUnique.new(self, $name);
+      die X::BehaviorNotUnique.new(:experiment(self), :$name);
     }
     %!behaviors{$name} = &sub;
   }
