@@ -1,22 +1,4 @@
-#| A mismatch, dies when $!die-on-mismatches is enabled.
-class X::Test::Lab::Mismatch is Exception {
-  has $.name is readonly;
-  has $.result is readonly;
-  method message { "experiment $!name observations mismatched" }
-  method Str {
-    "{self.message}:\n" ~
-    "{fmt-obs($!result.control)}\n" ~
-    "{$!result.candidates.map: { fmt-obs($_) }.join("\n")}\n";
-  }
-  sub fmt-obs($observation) {
-    "{$observation.name}:\n" ~ do if $observation.is-raised {
-      "  {$observation.exception.perl}\n" ~
-      $observation.exception.backtrace.map({"    $_"}).join("\n")
-    } else {
-      "  {$observation.value.perl}"
-    }
-  }
-}
+class Test::Lab::Experiment::Default { ... }
 
 #| This role provides shared behavior for experiments.
 #| Includers must implement C<is-enabled> and
@@ -138,13 +120,14 @@ class Test::Lab::Experiment {
   #|
   #| Override this method directly to change the default
   #| implementation.
-  method new ($name) {
-    self.bless(:$name);
+  method new($name = 'experiment') {
+    Test::Lab::Experiment::Default.bless(:$name)
   }
 
   #| Internal: compare two observations, using the
   #| configured compare block if present.
-  method obs-are-equiv(Test::Lab::Observation $a, Test::Lab::Observation $b) {
+  method obs-are-equiv
+    (Test::Lab::Observation $a, Test::Lab::Observation $b) {
     try {
       with &!comparator { $a.equiv-to($b, $_) }
       else              { $a.equiv-to($b) }
@@ -177,7 +160,11 @@ class Test::Lab::Experiment {
     }
     my $control = @observations.first: *.name eq $name;
 
-    my \result = Test::Lab::Result.new(:experiment(self), :@observations, :$control);
+    my \result = Test::Lab::Result.new(
+      :experiment(self),
+      :@observations,
+      :$control
+    );
 
     try {
       self.publish(result);
@@ -227,9 +214,12 @@ class Test::Lab::Experiment {
     self.try: &sub, :name('control');
   }
 
-  #| Override in subclass
-  method is-enabled { True }
+  method is-enabled { !!! }
 
-  #| Override in subclass
+  method publish($result) { !!! }
+}
+
+class Test::Lab::Experiment::Default is Test::Lab::Experiment {
+  method is-enabled { True }
   method publish($result) { }
 }
