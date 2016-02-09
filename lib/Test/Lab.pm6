@@ -5,7 +5,9 @@ use Test::Lab::Experiment;
 #| The default context data for an experiment created and run via the
 #| C<lab> helper sub.  Override this in any class that inherits Test::Lab
 #| to define your own behavior
-has %!context;
+has %.context = Hash.new;
+
+method get-ctx { %!context; }
 
 #| Define and run a lab experiment
 #|

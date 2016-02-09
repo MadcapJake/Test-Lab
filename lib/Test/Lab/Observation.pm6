@@ -34,20 +34,20 @@ method cleaned-value {
   if $!value.defined { $!experiment.clean-value($!value) }
 }
 
-method equiv-to($other, &comparator, &block?) {
+method equiv-to($other, &comparator?) {
   my $values-are-equal = False;
   my $both-dead = $other.did-die and self.did-die;
   my $neither-dead = not $other.did-die and not self.did-die;
 
-  if $neither-dead and &block.defined {
-    $values-are-equal = &block($!value, $other.value);
+  if $neither-dead and &comparator.defined {
+    $values-are-equal = &comparator($!value, $other.value);
   } else {
-    $values-are-equal = $!value == $other.value;
+    $values-are-equal = $!value === $other.value;
   }
 
   # TODO: everywhere else: s/Exception::class/Exception::cls/
   my $exceptions-are-equivalent = $both-dead and
-    $other.exception.class   == $!exception.cls and
+    $other.exception.WHAT    == $!exception.WHAT and
     $other.exception.message == $!exception.message;
 
   ($neither-dead and $values-are-equal) or
@@ -55,7 +55,7 @@ method equiv-to($other, &comparator, &block?) {
 }
 
 method hash {
-  [$!value, $!exception, self.cls].map({ .hash }).reduce: * +^ *;
+  [$!value, $!exception, self.WHAT].map({ .hash }).reduce: * +^ *;
 }
 
 method did-die { $!exception.defined }

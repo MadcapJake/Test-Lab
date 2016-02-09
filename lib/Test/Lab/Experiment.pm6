@@ -34,7 +34,7 @@ class Test::Lab::Experiment {
 =head1 Attributes
 
   #| Whether to die when the control and candidate mismatch.
-  #| If this is Nil, $!dies-on-mismatches class attribute is
+  #| If this is Nil, $!die-on-mismatches class attribute is
   #| used instead.
   has Bool $.die-on-mismatches;
 
@@ -47,7 +47,7 @@ class Test::Lab::Experiment {
 
   #| A Hash of behavior subs, keyed by String name. Register
   #| behavior subs with the `try` and `use` methods.
-  has Block %.behaviors(Str);
+  has Code %.behaviors(Str);
 
   #| A sub to clean an observed value for publishing or
   #| storing.
@@ -64,7 +64,7 @@ class Test::Lab::Experiment {
 
   has %!context;
 
-  has Block @!ignorables;
+  has Code @!ignorables;
 
   #| A sub that determines whether or not the experiment should run.
   has &.run-if;
@@ -89,6 +89,7 @@ class Test::Lab::Experiment {
 
   #| Adds extra experiment data to the %!context
   method context(*%ctx) {
+    return %!context unless %ctx.elems > 0;
     for %ctx.kv -> $key, $data { %!context{$key} = $data }
   }
 
@@ -96,7 +97,7 @@ class Test::Lab::Experiment {
   #| internal operation, like &publish. Override this method
   #| to track these exceptions. The default implementation
   #| re-throws the exception.
-  method died($operation, $error) { die $error; }
+  method died($operation, Exception $error) { die $error; }
 
   method die-on-mismatches {
     with $!die-on-mismatches { self.^die-on-mismatches }
@@ -183,11 +184,11 @@ class Test::Lab::Experiment {
       CATCH { default { self.died('publish', $_); } }
     }
 
-    if self.dies-on-mismatches && result.is-mismatched {
+    if self.die-on-mismatches && result.is-mismatched {
       die X::Test::Lab::Mismatch.new($!name, result);
     }
 
-    if $control.self.is-dead { die $control.exception }
+    if $control.self.did-die { die $control.exception }
     else             { return $control.value }
   }
 
