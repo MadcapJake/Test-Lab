@@ -168,7 +168,7 @@ class Test::Lab::Experiment {
 
     try {
       self.publish(result);
-      CATCH { default { self.died('publish', $_); } }
+      CATCH { default { self.died('publish', $_) } }
     }
 
     if self.die-on-mismatches && result.is-mismatched {
@@ -176,7 +176,7 @@ class Test::Lab::Experiment {
     }
 
     if $control.self.did-die { die $control.exception }
-    else             { return $control.value }
+    else { return $control.value }
   }
 
   #| Does a run-if sub allow the experiment to run?
