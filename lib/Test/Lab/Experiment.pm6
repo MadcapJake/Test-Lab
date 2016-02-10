@@ -66,7 +66,7 @@ class Test::Lab::Experiment {
   method clean-value($value) {
     with &!cleaner { &!cleaner($value) }
     else { $value }
-    CATCH { default { self.self.died("clean", $_); $value; } }
+    CATCH { default { self.died("clean", $_); $value; } }
   }
 
   #| Adds extra experiment data to the %!context

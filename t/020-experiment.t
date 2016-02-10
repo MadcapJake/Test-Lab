@@ -8,8 +8,8 @@ class Fake is Test::Lab::Experiment {
   has $.published-result;
   has @!exceptions;
   method exceptions { @!exceptions }
-  method died($op, $exception) {
-    @!exceptions.push: ($op, $exception);
+  method died($operation, Exception $exception) {
+    @!exceptions.push: ($operation, $exception);
   }
   method is-enabled { True }
   method publish($result) {
@@ -142,7 +142,7 @@ subtest {
 
   my $ex = Test::Lab::Experiment.new('hello');
   isa-ok $ex, Test::Lab::Experiment::Default;
-  role Boom { method publish($result) { die 'boomtown' } }
+  my role Boom { method publish($result) { die 'boomtown' } }
   $ex = $ex but Boom;
 
   $ex.use: { 'control' }
@@ -170,7 +170,12 @@ subtest {
   $ex.use: { 'control' }
   $ex.try: { 'candidate' }
 
-  is 'control', $ex.run;
+  my $result;
+  try {
+    $result = $ex.run;
+    CATCH { default { .say } }
+  }
+  is 'control', $result;
 
   my (\op, \exception) = $ex.exceptions.pop;
 
