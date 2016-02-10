@@ -12,9 +12,8 @@ class Fake is Test::Lab::Experiment {
     @!exceptions.push: ($operation, $exception);
   }
   method is-enabled { True }
-  method publish($result) {
-    $.published-result = $result;
-  }
+  method publish($result) { $!published-result = $result }
+  method new($name = 'experiment') { Fake.bless(:$name) }
 }
 
 subtest {
@@ -124,6 +123,7 @@ subtest {
   }
 }, 'passes through exceptions thrown by the control behavior';
 
+=begin TakesLong
 subtest {
   plan 1;
 
@@ -136,6 +136,7 @@ subtest {
   for ^1000 { $ex.run; @runs.push: $last }
   ok @runs.unique.elems > 1;
 }, 'shuffles behaviors before running';
+=end TakesLong
 
 subtest {
   plan 3;
@@ -170,17 +171,45 @@ subtest {
   $ex.use: { 'control' }
   $ex.try: { 'candidate' }
 
-  my $result;
-  try {
-    $result = $ex.run;
-    CATCH { default { .say } }
-  }
-  is 'control', $result;
+  is 'control', $ex.run;
 
   my (\op, \exception) = $ex.exceptions.pop;
 
   is 'publish', op;
   is 'boomtown', exception.message;
 }, 'reports publishing errors';
+
+subtest {
+  plan 2;
+
+  my $ex = Fake.new;
+  $ex.use: { 1 }
+  $ex.try: { 1 }
+
+  is 1, $ex.run;
+  ok $ex.published-result.defined;
+}, 'publishes results';
+
+subtest {
+  plan 2;
+
+  my $ex = Fake.new;
+  $ex.use: { 1 }
+
+  is 1, $ex.run;
+  nok $ex.published-result;
+}, 'does not publish results when there is only a control value';
+
+subtest {
+  plan 2;
+
+  my $ex = Fake.new;
+  $ex.compare: -> $a, $b { $a ~~ $b }
+  $ex.use: { '1' }
+  $ex.use: {  1  }
+
+  is '1', $ex.run;
+  ok $ex.published-result.is-matched;
+}, 'compares results with a comparator block if provided';
 
 done-testing;
