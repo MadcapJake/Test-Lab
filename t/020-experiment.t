@@ -214,4 +214,15 @@ subtest {
   ok $ex.published-result.is-matched;
 }, 'compares results with a comparator block if provided';
 
+subtest {
+  plan 2;
+
+  my $experiment = Fake.new;
+  my Test::Lab::Observation $a .= new(:name('a'), :$experiment, :block({ 1 }));
+  my Test::Lab::Observation $b .= new(:name('b'), :$experiment, :block({ 2 }));
+
+  ok  $experiment.obs-are-equiv($a, $a);
+  nok $experiment.obs-are-equiv($a, $b);
+}, 'uses a compare block to detminer if observatiosn are equivalent';
+
 done-testing;
