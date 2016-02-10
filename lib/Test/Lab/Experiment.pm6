@@ -115,13 +115,16 @@ class Test::Lab::Experiment {
     }).any;
   }
 
-  #| Creates a new instance if a class that implements the
-  #| Test::Lab::Experiment role
+  #| Creates a new instance of Test::Lab::Experiment::Default
+  #| if calling class is Test::Lab::Experiment, otherwise
+  #| it throws X::StubCode.
   #|
   #| Override this method directly to change the default
   #| implementation.
   method new($name = 'experiment') {
-    Test::Lab::Experiment::Default.bless(:$name)
+    if self.WHICH.Str ~~ 'Test::Lab::Experiment' {
+      Test::Lab::Experiment::Default.bless(:$name)
+    } else { !!! }
   }
 
   #| Internal: compare two observations, using the
