@@ -157,6 +157,7 @@ subtest {
         is 'boomtown', $_.message
       }
     }
+    flunk 'never threw boomtown error';
   }
 
 }, 're-throws exceptions thrown during publish by default';
@@ -204,11 +205,12 @@ subtest {
   plan 2;
 
   my $ex = Fake.new;
-  $ex.compare: -> $a, $b { $a ~~ $b }
+  $ex.comparator = -> $a, $b { $a ~~ $b }
   $ex.use: { '1' }
-  $ex.use: {  1  }
+  $ex.try: {  1  }
 
   is '1', $ex.run;
+  say $ex.published-result.is-matched;
   ok $ex.published-result.is-matched;
 }, 'compares results with a comparator block if provided';
 

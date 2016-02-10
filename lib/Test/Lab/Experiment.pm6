@@ -42,7 +42,7 @@ class Test::Lab::Experiment {
   #|
   #| The sub must take two arguments, the control value and a
   #| candidate value, and return true or false.
-  has &.comparator;
+  has &.comparator is rw;
 
   has %!context;
 
@@ -132,9 +132,9 @@ class Test::Lab::Experiment {
   method obs-are-equiv
     (Test::Lab::Observation $a, Test::Lab::Observation $b) {
     try {
-      with &!comparator { $a.equiv-to($b, $_) }
-      else              { $a.equiv-to($b) }
       CATCH { default { self.died('compare', $_) } }
+      with &!comparator { return $a.equiv-to($b, $_) }
+      else              { return $a.equiv-to($b) }
     }
   }
 
@@ -150,7 +150,7 @@ class Test::Lab::Experiment {
       die X::BehaviorMissing.new(:experiment(self), :name(n))
     }
 
-    unless self.should-experiment-run() { &block() }
+    return &block() unless self.should-experiment-run();
 
     with &!before-run { $_() }
 
@@ -178,18 +178,18 @@ class Test::Lab::Experiment {
       die X::Test::Lab::Mismatch.new($!name, result);
     }
 
-    if $control.self.did-die { die $control.exception }
+    if $control.did-die { die $control.exception }
     else { return $control.value }
   }
 
-  #| Does a run-if sub allow the experiment to run?
-  #|behaviors
+  #| Does a &!run-if sub allow the experiment to run?
+  #|
   #| Rescues and reports exceptions in a run-if sub if
   #| they occur.
   method run-if-sub-allows {
     try {
-      &.run-if.defined ?? &.run-if() !! True;
       CATCH { default { self.died('run-if', $_); return False } }
+      &.run-if.defined ?? &.run-if() !! True;
     }
   }
 
@@ -198,10 +198,12 @@ class Test::Lab::Experiment {
   #| Catches and reports exceptions in the enabled method
   #| if they occur.
   method should-experiment-run {
-    %!behaviors.elems > 1
-      && self.is-enabled
-      && self.run-if-sub-allows;
-    CATCH { default { self.died('enabled', $_) } }
+    try {
+      CATCH { default { self.died('enabled', $_) } }
+      %!behaviors.elems > 1
+        && self.is-enabled
+        && self.run-if-sub-allows;
+    }
   }
 
   #| Register a named behavior for this experiment

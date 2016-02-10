@@ -34,13 +34,13 @@ method context { $!experiment.context }
 method experiment-name { $!experiment.name }
 
 #| Was the result a match between all behaviors?
-method is-matched { @!mismatched.elems == 0 && self.any-ignored }
+method is-matched { @!mismatched.elems == 0 and not self.any-ignored }
 
 #| Were there mismatches in the behaviors?
-method any-mismatched { @!mismatched.any }
+method any-mismatched { @!mismatched.any.so }
 
 #| Where there any ignored mismatches?
-method any-ignored { @!ignored.any }
+method any-ignored { @!ignored.any.so }
 
 #| Evaluate the candidates to find mismatched and
 #| ignored resuls.
@@ -48,13 +48,13 @@ method any-ignored { @!ignored.any }
 #| Sets @!ignored and @!mismatched with the ignored
 #| and mismatched candidates.
 method evaluate-candidates {
-  my @ms = gather {
+  my @all-mismatches = gather {
     for @!candidates {
-      if not $!experiment.obs-are-equiv($!control, $_) { take $_ }
+      take $_ unless $!experiment.obs-are-equiv($!control, $_);
     }
   }
-  for @ms {
-    if $!experiment.ignore-mismatched-obs($!control, $_) { @!ignored.push: $_ }
-    else { @!mismatched.push: $_ }
+  for @all-mismatches {
+    if $!experiment.ignore-mismatched-obs($!control, $_)
+    { @!ignored.push($_) } else { @!mismatched.push: $_ }
   }
 }

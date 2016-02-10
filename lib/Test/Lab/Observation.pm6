@@ -21,7 +21,7 @@ has $.duration is readonly;
 submethod BUILD(:$!name, :$!experiment, :&block) {
   $!now = DateTime.now.Instant;
   try {
-    CATCH { default { $!exception = $! } }
+    CATCH { default { $!exception = $_ } }
     $!value = &block();
   }
   $!duration = (DateTime.now.Instant - $!now)
@@ -50,8 +50,7 @@ method equiv-to($other, &comparator?) {
     $other.exception.WHAT    == $!exception.WHAT and
     $other.exception.message == $!exception.message;
 
-  ($neither-dead and $values-are-equal) or
-    ($both-dead and $exceptions-are-equivalent)
+  $neither-dead && $values-are-equal or $both-dead && $exceptions-are-equivalent;
 }
 
 method hash {
