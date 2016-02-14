@@ -49,7 +49,7 @@ class Test::Lab::Experiment {
   has Code @!ignorables;
 
   #| A sub that determines whether or not the experiment should run.
-  has &.run-if;
+  has &.run-if is rw;
 
   #| The String name of this experiment. Default is
   #| "experiment". See Test::Lab::Default for an example
@@ -189,7 +189,7 @@ class Test::Lab::Experiment {
   method run-if-sub-allows {
     try {
       CATCH { default { self.died('run-if', $_); return False } }
-      &.run-if.defined ?? &.run-if() !! True;
+      &!run-if.defined ?? &!run-if() !! True;
     }
   }
 
