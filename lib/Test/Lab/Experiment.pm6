@@ -24,7 +24,7 @@ class Test::Lab::Experiment {
   #| experiment is enabled.
   #|
   #| The sub takes no arguments.
-  has &.before-run;
+  has &.before-run is rw;
 
 
   #| A Hash of behavior subs, keyed by String name. Register
@@ -36,7 +36,7 @@ class Test::Lab::Experiment {
   #|
   #| The sub takes one argument, the observed value which
   #| will be cleaned.
-  has &.cleaner;
+  has &.cleaner is rw;
 
   #| A sub which compares two experimental values.
   #|
@@ -64,9 +64,8 @@ class Test::Lab::Experiment {
   #| Rescues and reports exceptions in the clean sub if
   #| they occur.
   method clean-value($value) {
-    with &!cleaner { &!cleaner($value) }
-    else { $value }
-    CATCH { default { self.died("clean", $_); $value; } }
+    CATCH { default { self.died("clean", $_); return $value } }
+    with &!cleaner { &!cleaner($value) } else { $value }
   }
 
   #| Adds extra experiment data to the %!context
