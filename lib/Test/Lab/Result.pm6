@@ -5,7 +5,7 @@ unit class Test::Lab::Result;
 has @!candidates;
 
 #| The control Observation to which the rest are compared.
-has $!control;
+has $.control;
 
 #| An Experiment.
 has $!experiment;

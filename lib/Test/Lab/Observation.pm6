@@ -30,9 +30,7 @@ submethod BUILD(:$!name, :$!experiment, :&block) {
 #| Return a cleaned value suitable for publishing. Uses the
 #| experiment's defined cleaner block to clean the observed
 #| value.
-method cleaned-value {
-  if $!value.defined { $!experiment.clean-value($!value) }
-}
+method cleaned-value { with $!value { $!experiment.clean-value($_) } }
 
 method equiv-to($other, &comparator?) {
   my $values-are-equal = False;
