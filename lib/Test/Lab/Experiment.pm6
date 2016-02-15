@@ -105,11 +105,11 @@ class Test::Lab::Experiment {
   #|
   #| Returns true or false.
   method ignore-mismatched-obs($control, $candidate) {
-    return False unless @!ignorables.defined;
+    return False unless @!ignorables;
     @!ignorables.map(-> &ignore {
       try {
-        &ignore($control.value, $candidate.value);
-        CATCH { default { self.self.died('ignore', $_) } }
+        CATCH { default { say 'returning false'; self.died('ignore', $_); return False } }
+        return True if &ignore($control.value, $candidate.value);
       }
     }).any;
   }
