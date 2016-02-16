@@ -15,11 +15,6 @@ class Test::Lab::Experiment {
 
 =head1 Attributes
 
-  #| Whether to die when the control and candidate mismatch.
-  #| If this is Nil, $!throw-on-mismatches class attribute is
-  #| used instead.
-  has Bool $.throw-on-mismatches is rw;
-
   #| Define a sub to run before an experiment begins, if the
   #| experiment is enabled.
   #|
@@ -55,6 +50,13 @@ class Test::Lab::Experiment {
   #| "experiment". See Test::Lab::Default for an example
   #| of how to override this default.
   has $.name = 'experiment';
+
+
+  #| Whether to die when the control and candidate mismatch.
+  #| If this is Nil, $!throw-on-mismatches class attribute is
+  #| used instead.
+  our $throw-on-mismatches;
+  has Bool $!throw-on-mismatches;
 
 =head1 Methods
 
@@ -207,6 +209,21 @@ class Test::Lab::Experiment {
       %!behaviors.elems > 1
         && self.is-enabled
         && self.run-if-sub-allows;
+    }
+  }
+
+  multi method throw-on-mismatches(Test::Lab::Experiment:U : Bool $flag?) {
+    with $flag {
+      Test::Lab::Experiment::<$throw-on-mismatches> = $flag
+    } else {
+      Test::Lab::Experiment::<$throw-on-mismatches> // False
+    }
+  }
+  multi method throw-on-mismatches(Test::Lab::Experiment:D : Bool $flag?) {
+    with $flag {
+      $!throw-on-mismatches = $flag
+    } else {
+      $!throw-on-mismatches // Test::Lab::Experiment.throw-on-mismatches
     }
   }
 

@@ -4,6 +4,7 @@ use lib 'lib';
 
 use Test::Lab::Experiment;
 use Test::Lab::Result;
+use Test::Lab::Errors;
 
 class Fake is Test::Lab::Experiment {
   has $.published-result;
@@ -366,7 +367,9 @@ subtest {
   it 'calls a configured ignore block with the given observed values', {
     my $c = False;
     $*ex.ignore: -> $a, $b {
-      $c = True; is $*a.value, $a; is $*b.value, $b; True
+      is $*a.value, $a;
+      is $*b.value, $b;
+      $c = True;
     }
     ok $*ex.ignore-mismatched-obs($*a, $*b);
     ok $c;
@@ -402,16 +405,91 @@ subtest {
     is exception.message, 'kaboom';
   }
 
-  it 'skips ignore blocks that throw and tests any remaining' ~
+  it 'skips ignore blocks that throw and tests any remaining ' ~
      'blocks if an exception is swalloed', {
-    $*ex.ignore: { die 'kaboom' }
-    $*ex.ignore: { True }
+    $*ex.ignore: -> $a, $b { die 'kaboom' }
+    $*ex.ignore: -> $a, $b { True }
     ok $*ex.ignore-mismatched-obs($*a, $*b);
     is $*ex.exceptions.elems, 1;
   }
 
 }, 'Test::Lab::Experiment.ignore-mismatched-obs';
 
+subtest {
+  sub it($behavior, &block) {
+    my role Dier { has $!throw-on-mismatches }
+    my Fake $ex .= new;
+    my $*ex = $ex but Dier;
+    subtest &block, $behavior;
+  }
+
+  it 'throws when there is a mismatch if throw-on-mismatches ' ~
+     'is enabled', {
+    $*ex.throw-on-mismatches: True;
+    $*ex.use: { 'fine' }
+    $*ex.try: { 'not fine' }
+    throws-like { $*ex.run }, X::Test::Lab::Mismatch;
+  }
+
+  it 'doesn\'t throw when there is a mismatch if ' ~
+     'throw-on-mismatches is disabled', {
+    plan 2;
+    $*ex.throw-on-mismatches: False;
+    $*ex.use: { 'fine' }
+    $*ex.try: { 'not fine' }
+    lives-ok { is $*ex.run, 'fine' };
+  }
+
+  it 'throws a Mismatch error if the control raises ' ~
+     'and candidate doesn\'t', {
+    plan 1;
+    $*ex.throw-on-mismatches: True;
+    $*ex.use: { die 'control' }
+    $*ex.try: { 'candidate' }
+    throws-like { $*ex.run }, X::Test::Lab::Mismatch;
+  }
+
+  it 'throws a Mismatch error if the candidate raises ' ~
+     'and control doesn\'t', {
+    plan 1;
+    $*ex.throw-on-mismatches: True;
+    $*ex.use: { 'control' }
+    $*ex.try: { die 'candidate' }
+    throws-like { $*ex.run }, X::Test::Lab::Mismatch;
+  }
+
+  subtest {
+
+    it 'throws when there is a mismatch if the experiment ' ~
+       'instance\'s throw-on-mismatches is enabled', {
+      Fake.throw-on-mismatches: False;
+      $*ex.throw-on-mismatches: True;
+      $*ex.use: { 'fine' }
+      $*ex.try: { 'not fine' }
+      throws-like { $*ex.run }, X::Test::Lab::Mismatch;
+    }
+
+    it 'doesn\'t throw when there is a mismatch if the ' ~
+       'experiment instance\'s throw-on-mismatches is disabled', {
+      Fake.throw-on-mismatches: True;
+      $*ex.throw-on-mismatches: False;
+      $*ex.use: { 'fine' }
+      $*ex.try: { 'not fine' }
+      is $*ex.run, 'fine';
+    }
+
+    it 'respects the throw-on-mismatches class variable by default', {
+      Fake.throw-on-mismatches: False;
+      $*ex.use: { 'fine' }
+      $*ex.try: { 'not fine' }
+      is $*ex.run, 'fine';
+      Fake.throw-on-mismatches: True;
+      throws-like { $*ex.run }, X::Test::Lab::Mismatch;
+    }
+
+  }, 'method throw-on-mismatches';
+
+}, 'throwing on mismatches';
 
 
 done-testing;
