@@ -17,8 +17,8 @@ class X::NoValue is Exception is export {
   method message { "{$!observation.name} didn't return a value" }
 }
 
-#| A mismatch, dies when $!die-on-mismatches is enabled.
-class X::Test::Lab::Mismatch is Exception {
+#| A mismatch, dies when $!throw-on-mismatches is enabled.
+class X::Test::Lab::Mismatch is Exception is export {
   has $.name is readonly;
   has $.result is readonly;
   method message { "experiment $!name observations mismatched" }

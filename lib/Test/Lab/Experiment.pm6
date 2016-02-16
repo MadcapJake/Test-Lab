@@ -16,9 +16,9 @@ class Test::Lab::Experiment {
 =head1 Attributes
 
   #| Whether to die when the control and candidate mismatch.
-  #| If this is Nil, $!die-on-mismatches class attribute is
+  #| If this is Nil, $!throw-on-mismatches class attribute is
   #| used instead.
-  has Bool $.die-on-mismatches;
+  has Bool $.throw-on-mismatches is rw;
 
   #| Define a sub to run before an experiment begins, if the
   #| experiment is enabled.
@@ -80,10 +80,10 @@ class Test::Lab::Experiment {
   #| re-throws the exception.
   method died($operation, Exception $error) { die $error; }
 
-  method die-on-mismatches {
-    with $!die-on-mismatches { self.^die-on-mismatches }
-    else                     { $!die-on-mismatches.so  }
-  }
+  # method throw-on-mismatches {
+  #   if not $!throw-on-mismatches.defined { $throw-on-mismatches
+  #   } else { $!throw-on-mismatches }
+  # }
 
   #| Configure this experiment to ignore an observation
   #| with the given sub.
@@ -106,12 +106,17 @@ class Test::Lab::Experiment {
   #| Returns true or false.
   method ignore-mismatched-obs($control, $candidate) {
     return False unless @!ignorables;
-    @!ignorables.map(-> &ignore {
+    my @ignore-map = @!ignorables.clone;
+    for @ignore-map <-> $ignore {
       try {
-        CATCH { default { say 'returning false'; self.died('ignore', $_); return False } }
-        return True if &ignore($control.value, $candidate.value);
+        CATCH { default {
+          self.died('ignore', $_); $ignore = False; next
+        } }
+        $ignore = $ignore($control.value, $candidate.value).so;
+        last if $ignore;
       }
-    }).any;
+    };
+    @ignore-map.any.so;
   }
 
   #| Creates a new instance of Test::Lab::Experiment::Default
@@ -173,8 +178,8 @@ class Test::Lab::Experiment {
       CATCH { default { self.died('publish', $_) } }
     }
 
-    if self.die-on-mismatches && result.is-mismatched {
-      die X::Test::Lab::Mismatch.new($!name, result);
+    if self.throw-on-mismatches.so && result.any-mismatched {
+      die X::Test::Lab::Mismatch.new(:$!name, :result);
     }
 
     if $control.did-die { die $control.exception }
