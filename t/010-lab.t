@@ -7,29 +7,20 @@ use Test::Lab;
 use-ok 'Test::Lab';
 
 {
-  my class A does Test::Lab {}
-  my $a = A.new;
-  my $r = $a.lab: 'test', -> $e {
+  my $r = lab 'test', -> $e {
     $e.use: { 'control'   }
     $e.try: { 'candidate' }
   }
   is $r, 'control', 'provides a helper to instantiate and run experiments';
 }
 
-{
-  my class A does Test::Lab {}
-  my $a = A.new;
-
-  is-deeply Hash.new, $a.context, "provides an empty default context";
-}
+is-deeply Hash.new, Test::Lab::<%context>, "provides an empty default context";
 
 {
-  my class A does Test::Lab {}
-  my $a = A.new;
-  $a.context.push: (:default);
+  Test::Lab::<%context>.push: (:default);
 
   my $experiment;
-  $a.lab: 'test', -> $e {
+  lab 'test', -> $e {
     $experiment := $e;
     $e.context :inline;
     $e.use: -> { }
@@ -41,11 +32,8 @@ use-ok 'Test::Lab';
 }
 
 {
-  my class A does Test::Lab {}
-  my $a = A.new;
-
   my $experiment;
-  my $result = $a.lab: 'test', -> $e {
+  my $result = lab 'test', -> $e {
     $experiment := $e;
 
     $e.try: -> { True  }, :name<first-way>;
@@ -56,16 +44,13 @@ use-ok 'Test::Lab';
 }
 
 {
-  my class A does Test::Lab {}
-  my $a = A.new;
-
   my $experiment;
-  my $result = $a.lab: 'test', -> $e {
+  my $result = lab 'test', -> $e {
     $experiment := $e;
 
     $e.use: -> { True  };
     $e.try: -> { False }, :name<second-way>;
-  }, :name(Nil);
+  }, :run(Nil);
 
   ok $result, 'Runs control when there is a Nil named test';
 }

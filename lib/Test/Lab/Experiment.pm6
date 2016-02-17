@@ -82,11 +82,6 @@ class Test::Lab::Experiment {
   #| re-throws the exception.
   method died($operation, Exception $error) { die $error; }
 
-  # method throw-on-mismatches {
-  #   if not $!throw-on-mismatches.defined { $throw-on-mismatches
-  #   } else { $!throw-on-mismatches }
-  # }
-
   #| Configure this experiment to ignore an observation
   #| with the given sub.
   #|

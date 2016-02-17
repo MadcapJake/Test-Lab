@@ -1,13 +1,15 @@
-unit role Test::Lab;
+unit module Test::Lab;
 
 use Test::Lab::Experiment;
 
 #| The default context data for an experiment created and run via the
 #| C<lab> helper sub.  Override this in any class that inherits Test::Lab
 #| to define your own behavior
-has %.context = Hash.new;
+our %context = Hash.new;
 
-method get-ctx { %!context; }
+#| Change the default Experiment class to instantiate by modifying
+#| this variable.
+our $experiment-class = Test::Lab::Experiment;
 
 #| Define and run a lab experiment
 #|
@@ -17,11 +19,11 @@ method get-ctx { %!context; }
 #|
 #| Returns the calculated value of the given $run experiment, or raises
 #| if an exception was raised.
-method lab (Str:D $name, &procedure, Str:D :$run = 'control') is export {
-  my $experiment = Test::Lab::Experiment.new($name);
-  $experiment.context(|%!context);
+sub lab (Str:D $name, &procedure, :$run) is export {
+  my $experiment = $experiment-class.new($name);
+  $experiment.context(|%context);
 
   &procedure($experiment);
 
-  $experiment.run($run);
+  $experiment.run($run // 'control');
 }
