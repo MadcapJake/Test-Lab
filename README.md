@@ -1,5 +1,7 @@
 # :microscope: Test::Lab
 
+[![Build Status](https://img.shields.io/travis/MadcapJake/Test-Lab.svg)](https://travis-ci.org/MadcapJake/Test-Lab) [![Issues](https://img.shields.io/github/issues/MadcapJake/Test-Lab.svg)](https://github.com/MadcapJake/Test-Lab/issues) [![License](https://img.shields.io/github/license/MadcapJake/Test-Lab.svg)](https://github.com/MadcapJake/p6dx/blob/master/LICENSE) [![Slack](http://perl6.bestforever.com/badge.svg)](http://perl6.bestforever.com)
+
 Careful refactoring of critical paths. A port of Github's [Scientist](https://github.com/github/scientist) to Perl 6.
 
 ## How do I start a lab?
