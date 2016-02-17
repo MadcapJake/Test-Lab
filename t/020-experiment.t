@@ -547,9 +547,38 @@ subtest {
 
   }, 'X::Test::Lab::Mismatch';
 
-
-
 }, 'throwing on mismatches';
+
+subtest {
+
+  subtest {
+    my Fake $ex .= new;
+    my ($cont-ok, $cand-ok, $before) = False xx 2;
+    $ex.before = { $before = True }
+    $ex.use: { $cont-ok = $before }
+    $ex.try: { $cand-ok = $before }
+
+    $ex.run;
+
+    ok $before,  '«before» should have run';
+    ok $cont-ok, 'control should have run after «before»';
+    ok $cand-ok, 'candidate should have run after «before»';
+  }, 'runs when an experiment is enabled';
+
+  subtest {
+    my $before = False;
+    my Fake $f .= new;
+    my role FalseEnabled { method is-enabled { False } }
+    my $ex = $f but FalseEnabled;
+    $ex.before = { $before = True }
+    $ex.use: { 'value' }
+    $ex.try: { 'value' }
+    $ex.run;
+
+    nok $before, '«before» should not have run';
+  }
+
+}, '«before» block';
 
 
 done-testing;

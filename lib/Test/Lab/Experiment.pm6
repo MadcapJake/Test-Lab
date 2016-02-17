@@ -19,7 +19,7 @@ class Test::Lab::Experiment {
   #| experiment is enabled.
   #|
   #| The sub takes no arguments.
-  has &.before-run is rw;
+  has &.before is rw;
 
 
   #| A Hash of behavior subs, keyed by String name. Register
@@ -158,7 +158,7 @@ class Test::Lab::Experiment {
 
     return &block() unless self.should-experiment-run();
 
-    with &!before-run { $_() }
+    with &!before { $_() }
 
     %!behaviors.keys.pick(*).map: -> $key {
       &block = %!behaviors{$key};

@@ -23,7 +23,6 @@ class X::Test::Lab::Mismatch is Exception is export {
   has $.result is readonly;
   method message { "experiment $!name observations mismatched" }
   method Str {
-    say $!result.candidates[0].WHAT;
     "{self.message}:\n" ~
     "{fmt-obs($!result.control)}\n" ~
     (fmt-obs($_) for $!result.candidates).join("\n") ~
