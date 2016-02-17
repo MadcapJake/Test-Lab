@@ -2,20 +2,20 @@
 unit class Test::Lab::Result;
 
 #| An array of candidate Observations.
-has @.candidates;
+has @.candidates is readonly;
 
 #| The control Observation to which the rest are compared.
-has $.control;
+has $.control is readonly;
 
 #| An Experiment.
 has $!experiment;
 
 #| An array of observations which didn't match the control,
 #| but where ignored.
-has @!ignored;
+has @.ignored is readonly;
 
 #| An array of observations which didn't make the control.
-has @!mismatched;
+has @.mismatched is readonly;
 
 #| An array of observations in execution order.
 has @!observations;
