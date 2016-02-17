@@ -10,12 +10,10 @@ use Test::Lab;
 
 class MyWidget {
   method is-allowed($user) {
-    lab :name<widget-permissions>
-        :procedure(-> $e {
-          $e.use: { $!model.check-user($user).is-valid } # old way
-          $e.try: { $user.can('read', $!model) } # new way
-        })
-        :default;
+    lab 'widget-permissions', -> $e {
+      $e.use: { $!model.check-user($user).is-valid } # old way
+      $e.try: { $user.can('read', $!model) } # new way
+    }
   }
 }
 ```
