@@ -5,7 +5,7 @@ Careful refactoring of critical paths. A port of Github's [Scientist](https://gi
 ## How do I start a lab?
 Use the lab sub to build a default experiment for you:
 
-```perl6fe
+```perl6
 use Test::Lab;
 
 class MyWidget {
