@@ -32,3 +32,13 @@ class MyWidget {
   }
 }
 ```
+Change the default Experiment class to publish your results:
+```perl
+class MyExperiment is Test::Lab::Experiment {
+  method is-enabled { ... }
+  method publish($result) { ... }
+  method new($name = 'my-experiment') { MyExperiment.bless(:$name) }
+}
+Test::Lab::<$experiment-class> = MyExperiment;
+```
+Now you can use `lab` as before and it will utilize your own experiment class.  This is highly useful as `Test::Lab::Default` provides no publishing and thus no way to gain access to the results.
