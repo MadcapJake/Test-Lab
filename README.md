@@ -33,7 +33,7 @@ class MyWidget {
 }
 ```
 Change the default Experiment class to publish your results:
-```perl
+```perl6
 class MyExperiment is Test::Lab::Experiment {
   method is-enabled { ... }
   method publish($result) { ... }
