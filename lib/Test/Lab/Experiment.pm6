@@ -181,7 +181,7 @@ class Test::Lab::Experiment {
     }
 
     if self.throw-on-mismatches.so && result.any-mismatched {
-      die X::Test::Lab::Mismatch.new(:$!name, :result);
+      die X::Test::Lab::Mismatch.new(:$!name, :result(result));
     }
 
     if $control.did-die { die $control.exception }

@@ -489,6 +489,66 @@ subtest {
 
   }, 'method throw-on-mismatches';
 
+  subtest {
+
+    sub it($behavior, &block) {
+      Fake.throw-on-mismatches: True;
+      my $*ex = Fake.new;
+      $*ex.use: { 'foo' }
+      $*ex.try: { 'bar' }
+      my $*err;
+      try {
+        CATCH { default { $*err = $_; subtest &block, $behavior } }
+        $*ex.run;
+      }
+    }
+
+    it 'has the name of the experiment', {
+      is $*err.name, $*ex.name;
+    }
+
+    it 'includes the experiments\' results', {
+      is $*err.result, $*ex.published-result;
+    }
+
+    it 'formats nicely as a string', {
+      is $*err.Str, q:to/ERROR/;
+      experiment experiment observations mismatched:
+      control:
+        "foo"
+      candidate:
+        "bar"
+      ERROR
+    }
+
+    it 'includes the backtrace when an observation throws', {
+      my $mismatch;
+      my Fake $experiment .= new;
+      $experiment.use: { 'value' }
+      $experiment.try: { die 'error' }
+      try {
+        CATCH {
+          when X::Test::Lab::Mismatch {
+            pass 'X::Test::Lab::Mismatch thrown';
+            $mismatch = $_;
+          }
+          default { flunk 'wrong error thrown' }
+        }
+        $experiment.run;
+        flunk 'no error thrown';
+      }
+      my $lines = $mismatch.Str.lines;
+      is $lines[1], 'control:';
+      is $lines[2], '  "value"';
+      is $lines[3], 'candidate:';
+      is $lines[4], '  X::AdHoc.new(payload => "error")';
+      like $lines[5], /\s+in\s.+\sat\s.+\sline\s\d+/;
+    }
+
+  }, 'X::Test::Lab::Mismatch';
+
+
+
 }, 'throwing on mismatches';
 
 

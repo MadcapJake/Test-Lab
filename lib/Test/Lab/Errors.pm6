@@ -23,14 +23,16 @@ class X::Test::Lab::Mismatch is Exception is export {
   has $.result is readonly;
   method message { "experiment $!name observations mismatched" }
   method Str {
+    say $!result.candidates[0].WHAT;
     "{self.message}:\n" ~
     "{fmt-obs($!result.control)}\n" ~
-    "{$!result.candidates.map: { fmt-obs($_) }.join("\n")}\n";
+    (fmt-obs($_) for $!result.candidates).join("\n") ~
+    "\n";
   }
   sub fmt-obs($observation) {
-    "{$observation.name}:\n" ~ do if $observation.is-raised {
+    "{$observation.name}:\n" ~ do if $observation.did-die {
       "  {$observation.exception.perl}\n" ~
-      $observation.exception.backtrace.map({"    $_"}).join("\n")
+      $observation.exception.backtrace.Str.lines.map({"    $_"}).join("\n")
     } else {
       "  {$observation.value.perl}"
     }

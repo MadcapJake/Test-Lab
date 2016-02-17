@@ -2,7 +2,7 @@
 unit class Test::Lab::Result;
 
 #| An array of candidate Observations.
-has @!candidates;
+has @.candidates;
 
 #| The control Observation to which the rest are compared.
 has $.control;
