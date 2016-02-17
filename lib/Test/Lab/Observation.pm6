@@ -43,12 +43,11 @@ method equiv-to($other, &comparator?) {
     $values-are-equal = $!value === $other.value;
   }
 
-  # TODO: everywhere else: s/Exception::class/Exception::cls/
-  my $exceptions-are-equivalent = $both-dead and
-    $other.exception.WHAT    == $!exception.WHAT and
-    $other.exception.message == $!exception.message;
+  my $exceptions-are-equal = do given $other.exception {
+    $both-dead and .WHAT.isa($!exception.WHAT) and .message === $!exception.message;
+  }
 
-  $neither-dead && $values-are-equal or $both-dead && $exceptions-are-equivalent;
+  $neither-dead && $values-are-equal or $both-dead && $exceptions-are-equal;
 }
 
 method hash {
