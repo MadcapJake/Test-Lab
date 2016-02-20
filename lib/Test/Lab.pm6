@@ -20,7 +20,7 @@ our $experiment-class = Test::Lab::Experiment::Default;
 #| Returns the calculated value of the given $run experiment, or raises
 #| if an exception was raised.
 sub lab (Str:D $name, &procedure, :$run) is export {
-  my $experiment = $experiment-class.new($name);
+  my $experiment = $experiment-class.new(:$name);
   $experiment.context(|%context);
 
   &procedure($experiment);

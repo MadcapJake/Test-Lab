@@ -116,11 +116,6 @@ class Test::Lab::Experiment {
     @ignore-map.any.so;
   }
 
-  #| TODO
-  method new($name = 'experiment') {
-    self.bless(:$name);
-  }
-
   #| Internal: compare two observations, using the
   #| configured compare block if present.
   method obs-are-equiv
