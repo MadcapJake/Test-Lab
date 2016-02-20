@@ -9,7 +9,7 @@ our %context = Hash.new;
 
 #| Change the default Experiment class to instantiate by modifying
 #| this variable.
-our $experiment-class = Test::Lab::Experiment;
+our $experiment-class = Test::Lab::Experiment::Default;
 
 #| Define and run a lab experiment
 #|

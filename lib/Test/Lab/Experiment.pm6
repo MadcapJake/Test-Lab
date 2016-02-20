@@ -116,16 +116,9 @@ class Test::Lab::Experiment {
     @ignore-map.any.so;
   }
 
-  #| Creates a new instance of Test::Lab::Experiment::Default
-  #| if calling class is Test::Lab::Experiment, otherwise
-  #| it throws X::StubCode.
-  #|
-  #| Override this method directly to change the default
-  #| implementation.
+  #| TODO
   method new($name = 'experiment') {
-    if self.WHICH.Str ~~ 'Test::Lab::Experiment' {
-      Test::Lab::Experiment::Default.bless(:$name)
-    } else { !!! }
+    self.bless(:$name);
   }
 
   #| Internal: compare two observations, using the

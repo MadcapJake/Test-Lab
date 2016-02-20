@@ -7,7 +7,7 @@ use Test::Lab::Observation;
 use Test::Lab::Result;
 
 sub it($behavior, &block) {
-  my Test::Lab::Experiment $*ex .= new('experiment');
+  my Test::Lab::Experiment::Default $*ex .= new('experiment');
   subtest &block, $behavior;
 }
 
