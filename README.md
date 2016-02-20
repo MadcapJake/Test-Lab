@@ -39,7 +39,6 @@ Change the default Experiment class to publish your results:
 class MyExperiment is Test::Lab::Experiment {
   method is-enabled { ... }
   method publish($result) { ... }
-  method new($name = 'my-experiment') { MyExperiment.bless(:$name) }
 }
 Test::Lab::<$experiment-class> = MyExperiment;
 ```
