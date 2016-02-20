@@ -123,7 +123,7 @@ class Test::Lab::Experiment {
   #| Override this method directly to change the default
   #| implementation.
   method new($name = 'experiment') {
-    if self.WHICH.Str ~~ 'Test::Lab::Experiment' {
+    if self.WHAT eqv Test::Lab::Experiment {
       Test::Lab::Experiment::Default.bless(:$name)
     } else { !!! }
   }
