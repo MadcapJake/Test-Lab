@@ -19,38 +19,12 @@ class Fake is Test::Lab::Experiment {
 
 subtest {
   subtest {
-    my $ex = Test::Lab::Experiment::Default.new(:name<hello>);
-    isa-ok $ex, Test::Lab::Experiment::Default, 'uses builtin defaults';
+    my $ex = Test::Lab::Experiment.new(:name<hello>);
+    isa-ok $ex, Test::Lab::Experiment, 'uses builtin defaults';
     is $ex.name, "hello", "default name properly set";
   }, 'has a default implementation';
 
   is Fake.new.name, "experiment", "properly defaults to 'experiment'";
-
-  subtest {
-    plan 2;
-
-    my class A is Test::Lab::Experiment {
-      method new($name = 'experiment') {
-        Test::Lab::Experiment.bless(:$name)
-      }
-    }
-    my $a = A.new;
-
-    try {
-      CATCH { when X::StubCode { pass "is-enabled is a stub" }
-              default { flunk "Caught the wrong error" } }
-      $a.is-enabled;
-      flunk "No error was thrown"
-    }
-
-    try {
-      CATCH { when X::StubCode { pass "publish is a stub" }
-              default { flunk "Caught the wrong error" } }
-      $a.publish('result');
-      flunk "No error was thrown"
-    }
-
-  }, 'requires includers to implement «is-enabled» and «publish»';
 
   subtest {
     plan 2;
@@ -143,8 +117,8 @@ subtest {
   subtest {
     plan 3;
 
-    my $ex = Test::Lab::Experiment::Default.new(:name<hello>);
-    isa-ok $ex, Test::Lab::Experiment::Default;
+    my $ex = Test::Lab::Experiment.new(:name<hello>);
+    isa-ok $ex, Test::Lab::Experiment;
     my role Boom { method publish($result) { die 'boomtown' } }
     $ex = $ex but Boom;
 

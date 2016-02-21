@@ -5,7 +5,7 @@ use lib 'lib';
 use Test::Lab::Experiment;
 
 sub it($behavior, &block) {
-  my Test::Lab::Experiment::Default $*ex .= new;
+  my Test::Lab::Experiment $*ex .= new;
   subtest &block, $behavior;
 }
 
@@ -18,8 +18,8 @@ it 'noops publish', {
 }
 
 it 'is an experiment', {
-  isa-ok $*ex, Test::Lab::Experiment::Default;
-  isa-ok Test::Lab::Experiment::Default, Test::Lab::Experiment;
+  isa-ok $*ex, Test::Lab::Experiment;
+  isa-ok Test::Lab::Experiment, Test::Lab::Experiment;
 }
 
 it 'rethrows when an internal action throws', {
