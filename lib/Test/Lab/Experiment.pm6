@@ -116,18 +116,6 @@ class Test::Lab::Experiment {
     @ignore-map.any.so;
   }
 
-  #| Creates a new instance of Test::Lab::Experiment::Default
-  #| if calling class is Test::Lab::Experiment, otherwise
-  #| it throws X::StubCode.
-  #|
-  #| Override this method directly to change the default
-  #| implementation.
-  method new($name = 'experiment') {
-    if self.WHAT eqv Test::Lab::Experiment {
-      Test::Lab::Experiment::Default.bless(:$name)
-    } else { !!! }
-  }
-
   #| Internal: compare two observations, using the
   #| configured compare block if present.
   method obs-are-equiv

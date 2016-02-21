@@ -59,7 +59,6 @@ is-deeply Hash.new, Test::Lab::<%context>, "provides an empty default context";
   class NewDefault is Test::Lab::Experiment {
     method is-enabled { False }
     method publish($result) { }
-    method new($name = 'better') { NewDefault.bless(:$name) }
   }
   Test::Lab::<$experiment-class> = NewDefault;
   lab 'test', -> $e {

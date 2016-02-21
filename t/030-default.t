@@ -5,7 +5,7 @@ use lib 'lib';
 use Test::Lab::Experiment;
 
 sub it($behavior, &block) {
-  my Test::Lab::Experiment $*ex .= new;
+  my Test::Lab::Experiment::Default $*ex .= new;
   subtest &block, $behavior;
 }
 
