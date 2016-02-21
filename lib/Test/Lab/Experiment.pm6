@@ -1,5 +1,3 @@
-class Test::Lab::Experiment::Default { ... }
-
 #| This role provides shared behavior for experiments.
 #| Includers must implement C<is-enabled> and
 #| C<publish(result)>.
@@ -223,12 +221,7 @@ class Test::Lab::Experiment {
     self.try: &sub, :name('control');
   }
 
-  method is-enabled { !!! }
-
-  method publish($result) { !!! }
-}
-
-class Test::Lab::Experiment::Default is Test::Lab::Experiment {
   method is-enabled { True }
-  method publish($result) { }
+
+  method publish($result) {  }
 }
