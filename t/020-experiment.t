@@ -15,13 +15,12 @@ class Fake is Test::Lab::Experiment {
   }
   method is-enabled { True }
   method publish(Test::Lab::Result $result) { $!published-result = $result }
-  method new($name = 'experiment') { Fake.bless(:$name) }
 }
 
 subtest {
   subtest {
-    my $ex = Test::Lab::Experiment.new('hello');
-    isa-ok $ex, Test::Lab::Experiment, 'uses builtin defaults';
+    my $ex = Test::Lab::Experiment::Default.new(:name<hello>);
+    isa-ok $ex, Test::Lab::Experiment::Default, 'uses builtin defaults';
     is $ex.name, "hello", "default name properly set";
   }, 'has a default implementation';
 
@@ -144,7 +143,7 @@ subtest {
   subtest {
     plan 3;
 
-    my $ex = Test::Lab::Experiment.new('hello');
+    my $ex = Test::Lab::Experiment::Default.new(:name<hello>);
     isa-ok $ex, Test::Lab::Experiment::Default;
     my role Boom { method publish($result) { die 'boomtown' } }
     $ex = $ex but Boom;

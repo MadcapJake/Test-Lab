@@ -26,7 +26,7 @@ use Test::Lab::Experiment;
 
 class MyWidget {
   method allows($user) {
-    my $experiment = Test::Lab::Experiment.new("widget-permissions");
+    my $experiment = Test::Lab::Experiment.new(:name<widget-permissions>);
     $experiment.use: { $!model.check-user($user).is-valid } # old way
     $experiment.try: { $user.can :$!model :read } # new way
 
@@ -39,7 +39,6 @@ Change the default Experiment class to publish your results:
 class MyExperiment is Test::Lab::Experiment {
   method is-enabled { ... }
   method publish($result) { ... }
-  method new($name = 'my-experiment') { MyExperiment.bless(:$name) }
 }
 Test::Lab::<$experiment-class> = MyExperiment;
 ```
