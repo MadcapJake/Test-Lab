@@ -1,4 +1,5 @@
 {
+  "perl"        : "6.*",
   "name"        : "Test::Lab",
   "version"     : "1.0.0",
   "description" : "Test run refactored code against legacy code",
