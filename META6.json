@@ -1,5 +1,8 @@
 {
   "name"        : "Test::Lab",
+  "perl"        : "6.*",
+  "api"         : "1",
+  "auth"        : "github:MadcapJake",
   "license"     : "Artistic-2.0",
   "version"     : "1.0.0",
   "description" : "Test run refactored code against legacy code",
@@ -11,6 +14,12 @@
     "Test::Lab::Errors"              : "lib/Test/Lab/Errors.rakumod"
   },
   "depends"     : [],
+  "build-depends" : [ ],
+  "test-depends" : [ ],
+  "resources" : [ ],
+  "tags": [
+    "Test", "Performance", "Experiment", "Measurement"
+  ],
   "source-type" : "git",
   "source-url"  : "git://github.com/MadcapJake/Test-Lab.git"
 }
