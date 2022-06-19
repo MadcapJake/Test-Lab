@@ -15,9 +15,13 @@
     "Test::Lab::Result"              : "lib/Test/Lab/Result.rakumod",
     "Test::Lab::Errors"              : "lib/Test/Lab/Errors.rakumod"
   },
-  "depends"     : [],
+  "depends"     : [
+    
+  ],
   "build-depends" : [ ],
-  "test-depends" : [ ],
+  "test-depends" : [
+    "Test::META"
+  ],
   "resources" : [ ],
   "tags": [
     "Test", "Performance", "Experiment", "Measurement", "Lab"
