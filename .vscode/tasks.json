@@ -1,0 +1,40 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Tests",
+            "type": "shell",
+            "command": "%HOMEPATH%\\.raku\\bin\\prove6 --ignore-exit --verbose --err=ignore",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            // "problemMatcher": {
+            //     "owner": "raku",
+            //     "fileLocation": "autoDetect",
+            //     "pattern": [
+            //         {
+            //             "regexp": "^((?!(?:not )?ok \\d|All \\d|Test Summary |No subtests run|Non-zero exit |Files=\\d|Result: |The terminal process |t\\\\|#|Failed \\d|\\d\\.|\\s+in)\\w.*)$",
+            //             "message": 1
+            //         },
+            //         {
+            //             "regexp": "^\\s+in (?:method|block|sub|any) ([\\w\\s<>]+)? at ([^\\s].*) \\([\\w\\d:]+\\) line (\\d+)$",
+            //             "code": 1,
+            //             "file": 2,
+            //             "line": 3,
+            //         }
+            //     ]
+            // }
+        }
+    ]
+}

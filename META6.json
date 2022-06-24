@@ -1,8 +1,8 @@
 {
   "name"        : "Test::Lab",
   "description" : "Test run refactored code against legacy code",
-  "version"     : "1.1.1",
-  "perl"        : "6.c",
+  "version"     : "1.2.0",
+  "perl"        : "6.d",
   "authors": [
     "Jake Russo"
   ],
@@ -13,7 +13,7 @@
     "Test::Lab::Experiment"          : "lib/Test/Lab/Experiment.rakumod",
     "Test::Lab::Observation"         : "lib/Test/Lab/Observation.rakumod",
     "Test::Lab::Result"              : "lib/Test/Lab/Result.rakumod",
-    "Test::Lab::Errors"              : "lib/Test/Lab/Errors.rakumod"
+    "Test::Lab::Error"               : "lib/Test/Lab/Error.rakumod"
   },
   "depends"     : [
     

@@ -2,7 +2,7 @@
 
 [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/MadcapJake/Test-Lab/Tests%20on%20source?style=flat-square)](https://github.com/MadcapJake/Test-Lab/actions/workflows/test.yml) [![Issues](https://img.shields.io/github/issues/MadcapJake/Test-Lab.svg)](https://github.com/MadcapJake/Test-Lab/issues) [![License](https://img.shields.io/github/license/MadcapJake/Test-Lab.svg)](https://github.com/MadcapJake/p6dx/blob/master/LICENSE)
 
-Careful refactoring of critical paths. A port of Github's [Scientist](https://github.com/github/scientist) to Perl 6.
+Careful refactoring of critical paths. A port of Github's [Scientist](https://github.com/github/scientist) to Raku.
 
 ## How do I start a lab?
 Use the lab sub to build a default experiment for you:

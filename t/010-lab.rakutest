@@ -1,7 +1,6 @@
 use v6;
 use Test;
 use lib 'lib';
-
 use Test::Lab;
 
 use-ok 'Test::Lab';
@@ -33,26 +32,26 @@ is-deeply Hash.new, Test::Lab::<%context>, "provides an empty default context";
 
 {
   my $experiment;
-  my $result = lab 'test', -> $e {
+  my $result = lab 'test', 'first-way', -> $e {
     $experiment := $e;
 
     $e.try: -> { True  }, :name<first-way>;
     $e.try: -> { False }, :name<secnd-way>;
-  }, :run<first-way>;
+  };
 
-  ok $result, 'Runs the named test instead of the control';
+  ok $result, 'Runs the named run instead of the control';
 }
 
 {
   my $experiment;
-  my $result = lab 'test', -> $e {
+  my $result = lab 'test', Nil, -> $e {
     $experiment := $e;
 
     $e.use: -> { True  };
     $e.try: -> { False }, :name<second-way>;
-  }, :run(Nil);
+  };
 
-  ok $result, 'Runs control when there is a Nil named test';
+  ok $result, 'Runs control when there is a Nil named run';
 }
 
 {

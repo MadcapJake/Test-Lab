@@ -5,9 +5,11 @@ use lib 'lib';
 use Test::Lab::Experiment;
 
 sub it($behavior, &block) {
-  my Test::Lab::Experiment $*ex .= new(:name<test>);
+  my Test::Lab::Experiment $*ex .= new :name<test>;
   subtest &block, $behavior;
 }
+
+plan 7;
 
 it 'observes and records the execution of a block', {
   plan 3;
@@ -16,7 +18,7 @@ it 'observes and records the execution of a block', {
     :experiment($*ex)
     :block({ sleep 0.1; 'ret' });
   is $ob.value, 'ret', 'value is «ret»';
-  nok $ob.did-die, '«did-die» returns False';
+  nok $ob.thrown, '«thrown» returns False';
   is-approx $ob.duration, 0.1, 0.05,'«duration» "is-approx" 0.1 seconds';
   # ok ($ob.duration - 0.1) ~~ 0..0.05, '«duration» "is-approx" 0.1 seconds';
 }
@@ -27,7 +29,7 @@ it 'stashes exceptions', {
     :name<test>
     :experiment($*ex)
     :block({ die 'exceptional' });
-  ok $ob.did-die;
+  ok $ob.thrown;
   is $ob.exception.message, 'exceptional';
   nok $ob.value.defined;
 }
@@ -101,8 +103,8 @@ it 'compares values using a comparator block', {
   my Test::Lab::Observation $a .= new :name<test> :experiment($*ex) :block({  1  });
   my Test::Lab::Observation $b .= new :name<test> :experiment($*ex) :block({ '1' });
 
-  nok $a.equiv-to($b);
-  ok $a.equiv-to($b, -> $x, $y { $x ~~ $y });
+  nok $a.equiv-to($b), "equiv-to returns false because 1 is not equal to '1'";
+  ok $a.equiv-to($b, -> $x, $y { $x ~~ $y }), "equiv-to returns true because tilde is provided as comparator";
 
   my @yielded;
   $a.equiv-to($b, -> $x, $y {
@@ -114,6 +116,8 @@ it 'compares values using a comparator block', {
 }
 
 subtest {
+
+  plan 2;
 
   it 'returns the observation\'s value by default', {
     my Test::Lab::Observation $a .= new :name<test> :experiment($*ex) :block({ 1 });
@@ -127,5 +131,3 @@ subtest {
   }
 
 }, '.cleaned-value';
-
-done-testing;

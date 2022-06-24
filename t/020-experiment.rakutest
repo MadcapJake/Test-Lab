@@ -1,16 +1,15 @@
 use v6;
 use Test;
 use lib 'lib';
-
 use Test::Lab::Experiment;
 use Test::Lab::Result;
-use Test::Lab::Errors;
+use Test::Lab::Error;
 
 class Fake is Test::Lab::Experiment {
   has $.published-result;
   has @!exceptions;
   method exceptions { @!exceptions }
-  method died($operation, Exception $exception) {
+  method thrown($operation, Exception $exception) {
     @!exceptions.push: ($operation, $exception);
   }
   method is-enabled { True }
@@ -32,7 +31,7 @@ subtest {
     try {
       $ex.run;
       CATCH {
-        when X::BehaviorMissing {
+        when X::Test::Lab::BehaviorMissing {
           pass 'properly throws BehaviorMissing exception';
           is 'control', $_.name, 'the missing behavior is the control';
         }
@@ -63,7 +62,7 @@ subtest {
 
     try {
       CATCH {
-        when X::BehaviorNotUnique {
+        when X::Test::Lab::BehaviorNotUnique {
           pass 'caught duplicate control block';
           is $ex, $_.experiment, 'exception has the experiment';
           is 'control', $_.name, 'exception has the name';
@@ -71,7 +70,7 @@ subtest {
         default { flunk 'did not return correct Exception' }
       }
       $ex.use: { 'control-again' }
-      flunk 'Did not throw error on duplicate control block';
+      flunk 'Did not raise error on duplicate control block';
     }
 
   }, 'complains about duplicate behavior names';
@@ -289,7 +288,7 @@ subtest {
     is op, 'clean';
     is ex.message, 'kaboom';
   }, 'reports an error and returns the original vlaue when an' ~
-     'error is raised in a clean block';
+     'error is thrown in a clean block';
 
 }, 'Test::Lab::Experiment';
 
@@ -329,31 +328,31 @@ subtest {
      Test::Lab::Observation.new :name<b> :$experiment :block({ 2 }))
   }
   sub it($behavior, &block) {
-    my ($*ex, $*a, $*b) = prep();
+    my ($*exp, $*a, $*b) = prep();
     subtest &block, $behavior;
   }
 
   it 'does not ignore an observation if no ignores are configured', {
-    nok $*ex.ignore-mismatched-obs($*a, $*b);
+    nok $*exp.ignore-mismatched-obs($*a, $*b);
   }
 
   it 'calls a configured ignore block with the given observed values', {
     my $c = False;
-    $*ex.ignore: -> $a, $b {
+    $*exp.ignore: -> $a, $b {
       is $*a.value, $a;
       is $*b.value, $b;
       $c = True;
     }
-    ok $*ex.ignore-mismatched-obs($*a, $*b);
+    ok $*exp.ignore-mismatched-obs($*a, $*b);
     ok $c;
   }
 
   it 'calls multiple ignore blocks to see if any match', {
     my ($called-one, $called-two, $called-three) = False xx 3;
-    $*ex.ignore: -> $a, $b { $called-one   = True; False }
-    $*ex.ignore: -> $a, $b { $called-two   = True; False }
-    $*ex.ignore: -> $a, $b { $called-three = True; False }
-    nok $*ex.ignore-mismatched-obs($*a, $*b);
+    $*exp.ignore: -> $a, $b { $called-one   = True; False }
+    $*exp.ignore: -> $a, $b { $called-two   = True; False }
+    $*exp.ignore: -> $a, $b { $called-three = True; False }
+    nok $*exp.ignore-mismatched-obs($*a, $*b);
     ok $called-one;
     ok $called-two;
     ok $called-three;
@@ -361,127 +360,127 @@ subtest {
 
   it "only calls ignore blocks until one matches", {
     my ($called-one, $called-two, $called-three) = False xx 3;
-    $*ex.ignore: -> $a, $b { $called-one   = True; False }
-    $*ex.ignore: -> $a, $b { $called-two   = True; True  }
-    $*ex.ignore: -> $a, $b { $called-three = True; False }
-    ok $*ex.ignore-mismatched-obs: $*a, $*b;
+    $*exp.ignore: -> $a, $b { $called-one   = True; False }
+    $*exp.ignore: -> $a, $b { $called-two   = True; True  }
+    $*exp.ignore: -> $a, $b { $called-three = True; False }
+    ok $*exp.ignore-mismatched-obs: $*a, $*b;
     ok $called-one;
     ok $called-two;
     nok $called-three;
   }
 
-  it 'reports exceptions raised in an ignore block and returns false', {
-    $*ex.ignore: -> $a, $b { die 'kaboom' }
-    nok $*ex.ignore-mismatched-obs($*a, $*b);
-    my (\op, \exception) = $*ex.exceptions.pop;
+  it 'reports exceptions thrown in an ignore block and returns false', {
+    $*exp.ignore: -> $a, $b { die 'kaboom' }
+    nok $*exp.ignore-mismatched-obs($*a, $*b);
+    my (\op, \exception) = $*exp.exceptions.pop;
     is op, 'ignore';
     is exception.message, 'kaboom';
   }
 
   it 'skips ignore blocks that throw and tests any remaining ' ~
      'blocks if an exception is swalloed', {
-    $*ex.ignore: -> $a, $b { die 'kaboom' }
-    $*ex.ignore: -> $a, $b { True }
-    ok $*ex.ignore-mismatched-obs($*a, $*b);
-    is $*ex.exceptions.elems, 1;
+    $*exp.ignore: -> $a, $b { die 'kaboom' }
+    $*exp.ignore: -> $a, $b { True }
+    ok $*exp.ignore-mismatched-obs($*a, $*b);
+    is $*exp.exceptions.elems, 1;
   }
 
 }, 'Test::Lab::Experiment.ignore-mismatched-obs';
 
 subtest {
   sub it($behavior, &block) {
-    my role Dier { has $!throw-on-mismatches }
+    my role Dier { has $!raise-on-mismatches }
     my Fake $ex .= new;
-    my $*ex = $ex but Dier;
+    my $*exp = $ex but Dier;
     subtest &block, $behavior;
   }
 
-  it 'throws when there is a mismatch if throw-on-mismatches ' ~
+  it 'throws when there is a mismatch if raise-on-mismatches ' ~
      'is enabled', {
-    $*ex.throw-on-mismatches: True;
-    $*ex.use: { 'fine' }
-    $*ex.try: { 'not fine' }
-    throws-like { $*ex.run }, X::Test::Lab::Mismatch;
+    $*exp.raise-on-mismatches: True;
+    $*exp.use: { 'fine' }
+    $*exp.try: { 'not fine' }
+    throws-like { $*exp.run }, X::Test::Lab::Mismatch;
   }
 
   it 'doesn\'t throw when there is a mismatch if ' ~
-     'throw-on-mismatches is disabled', {
+     'raise-on-mismatches is disabled', {
     plan 2;
-    $*ex.throw-on-mismatches: False;
-    $*ex.use: { 'fine' }
-    $*ex.try: { 'not fine' }
-    lives-ok { is $*ex.run, 'fine' };
+    $*exp.raise-on-mismatches: False;
+    $*exp.use: { 'fine' }
+    $*exp.try: { 'not fine' }
+    lives-ok { is $*exp.run, 'fine' };
   }
 
-  it 'throws a Mismatch error if the control raises ' ~
+  it 'throws a Mismatch error if the control throws ' ~
      'and candidate doesn\'t', {
     plan 1;
-    $*ex.throw-on-mismatches: True;
-    $*ex.use: { die 'control' }
-    $*ex.try: { 'candidate' }
-    throws-like { $*ex.run }, X::Test::Lab::Mismatch;
+    $*exp.raise-on-mismatches: True;
+    $*exp.use: { die 'control' }
+    $*exp.try: { 'candidate' }
+    throws-like { $*exp.run }, X::Test::Lab::Mismatch;
   }
 
-  it 'throws a Mismatch error if the candidate raises ' ~
+  it 'throws a Mismatch error if the candidate throws ' ~
      'and control doesn\'t', {
     plan 1;
-    $*ex.throw-on-mismatches: True;
-    $*ex.use: { 'control' }
-    $*ex.try: { die 'candidate' }
-    throws-like { $*ex.run }, X::Test::Lab::Mismatch;
+    $*exp.raise-on-mismatches: True;
+    $*exp.use: { 'control' }
+    $*exp.try: { die 'candidate' }
+    throws-like { $*exp.run }, X::Test::Lab::Mismatch;
   }
 
   subtest {
 
     it 'throws when there is a mismatch if the experiment ' ~
-       'instance\'s throw-on-mismatches is enabled', {
-      Fake.throw-on-mismatches: False;
-      $*ex.throw-on-mismatches: True;
-      $*ex.use: { 'fine' }
-      $*ex.try: { 'not fine' }
-      throws-like { $*ex.run }, X::Test::Lab::Mismatch;
+       'instance\'s raise-on-mismatches is enabled', {
+      Fake.raise-on-mismatches: False;
+      $*exp.raise-on-mismatches: True;
+      $*exp.use: { 'fine' }
+      $*exp.try: { 'not fine' }
+      throws-like { $*exp.run }, X::Test::Lab::Mismatch;
     }
 
     it 'doesn\'t throw when there is a mismatch if the ' ~
-       'experiment instance\'s throw-on-mismatches is disabled', {
-      Fake.throw-on-mismatches: True;
-      $*ex.throw-on-mismatches: False;
-      $*ex.use: { 'fine' }
-      $*ex.try: { 'not fine' }
-      is $*ex.run, 'fine';
+       'experiment instance\'s raise-on-mismatches is disabled', {
+      Fake.raise-on-mismatches: True;
+      $*exp.raise-on-mismatches: False;
+      $*exp.use: { 'fine' }
+      $*exp.try: { 'not fine' }
+      is $*exp.run, 'fine';
     }
 
-    it 'respects the throw-on-mismatches class variable by default', {
-      Fake.throw-on-mismatches: False;
-      $*ex.use: { 'fine' }
-      $*ex.try: { 'not fine' }
-      is $*ex.run, 'fine';
-      Fake.throw-on-mismatches: True;
-      throws-like { $*ex.run }, X::Test::Lab::Mismatch;
+    it 'respects the raise-on-mismatches class variable by default', {
+      Fake.raise-on-mismatches: False;
+      $*exp.use: { 'fine' }
+      $*exp.try: { 'not fine' }
+      is $*exp.run, 'fine';
+      Fake.raise-on-mismatches: True;
+      throws-like { $*exp.run }, X::Test::Lab::Mismatch;
     }
 
-  }, 'method throw-on-mismatches';
+  }, 'method raise-on-mismatches';
 
   subtest {
 
     sub it($behavior, &block) {
-      Fake.throw-on-mismatches: True;
-      my $*ex = Fake.new;
-      $*ex.use: { 'foo' }
-      $*ex.try: { 'bar' }
+      Fake.raise-on-mismatches: True;
+      my $*exp = Fake.new;
+      $*exp.use: { 'foo' }
+      $*exp.try: { 'bar' }
       my $*err;
       try {
         CATCH { default { $*err = $_; subtest &block, $behavior } }
-        $*ex.run;
+        $*exp.run;
       }
     }
 
     it 'has the name of the experiment', {
-      is $*err.name, $*ex.name;
+      is $*err.name, $*exp.name;
     }
 
     it 'includes the experiments\' results', {
-      is $*err.result, $*ex.published-result;
+      is $*err.result, $*exp.published-result;
     }
 
     it 'formats nicely as a string', {
@@ -520,7 +519,7 @@ subtest {
 
   }, 'X::Test::Lab::Mismatch';
 
-}, 'throwing on mismatches';
+}, 'raising on mismatches';
 
 subtest {
 

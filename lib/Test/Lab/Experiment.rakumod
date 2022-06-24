@@ -7,7 +7,7 @@
 #| interface.
 class Test::Lab::Experiment {
 
-  use Test::Lab::Errors;
+  use Test::Lab::Error;
   use Test::Lab::Observation;
   use Test::Lab::Result;
 
@@ -37,6 +37,12 @@ class Test::Lab::Experiment {
   #| candidate value, and return true or false.
   has &.comparator is rw;
 
+  #| A sub which compares two experimental values.
+  #|
+  #| The sub must take two arguments, the control Error and a
+  #| candidate Error, and return true or false.
+  has &.error-comparator is rw;
+
   has %!context;
 
   has Code @!ignorables;
@@ -51,10 +57,10 @@ class Test::Lab::Experiment {
 
 
   #| Whether to die when the control and candidate mismatch.
-  #| If this is Nil, $!throw-on-mismatches class attribute is
+  #| If this is Nil, $!raise-on-mismatches class attribute is
   #| used instead.
-  our $throw-on-mismatches;
-  has Bool $!throw-on-mismatches;
+  our $raise-on-mismatches;
+  has Bool $!raise-on-mismatches;
 
 =head1 Methods
 
@@ -64,7 +70,7 @@ class Test::Lab::Experiment {
   #| Rescues and reports exceptions in the clean sub if
   #| they occur.
   method clean-value($value) {
-    CATCH { default { self.died("clean", $_); return $value } }
+    CATCH { default { self.thrown("clean", $_); return $value } }
     with &!cleaner { &!cleaner($value) } else { $value }
   }
 
@@ -72,13 +78,14 @@ class Test::Lab::Experiment {
   method context(*%ctx) {
     return %!context unless %ctx.elems > 0;
     for %ctx.kv -> $key, $data { %!context{$key} = $data }
+    %!context
   }
 
   #| Called when an exception throws while running an
   #| internal operation, like &publish. Override this method
   #| to track these exceptions. The default implementation
   #| re-throws the exception.
-  method died($operation, Exception $error) { die $error; }
+  method thrown($operation, Exception $error) { die $error; }
 
   #| Configure this experiment to ignore an observation
   #| with the given sub.
@@ -103,70 +110,54 @@ class Test::Lab::Experiment {
     return False unless @!ignorables;
     my @ignore-map = @!ignorables.clone;
     for @ignore-map <-> $ignore {
-      try {
-        CATCH { default {
-          self.died('ignore', $_); $ignore = False; next
-        } }
-        $ignore = $ignore($control.value, $candidate.value).so;
-        last if $ignore;
-      }
+      CATCH { default {
+        self.thrown('ignore', $_); $ignore = False; next
+      } }
+      $ignore = $ignore($control.value, $candidate.value).so;
+      last if $ignore;
     };
     @ignore-map.any.so;
   }
 
   #| Internal: compare two observations, using the
   #| configured compare block if present.
-  method obs-are-equiv
-    (Test::Lab::Observation $a, Test::Lab::Observation $b) {
-    try {
-      CATCH { default { self.died('compare', $_) } }
-      with &!comparator { return $a.equiv-to($b, $_) }
-      else              { return $a.equiv-to($b) }
-    }
+  method obs-are-equiv(Test::Lab::Observation $a, Test::Lab::Observation $b) {
+    CATCH { default { self.thrown('compare', $_) } }
+    with &.comparator       { return $a.equiv-to($b, $_) }
+    with &.error-comparator { return $a.equiv-to($b, $_) }
+    else                    { return $a.equiv-to($b) }
   }
 
-  method run($name?) {
+  #| Internal: Run all the behaviors for this experiment, observing each and
+  #| publishing the results. Return the result of the named behavior, default
+  #| "control".
+  method run(Str:D $name = 'control') {
     # TODO: Figure out how to model a `freeze` pattern on hashes
-    # my \behaviors = %!behaviors.pairs.list;
-    # my \ctx = %!context.pairs.list;
-    my \n = $name // 'control';
-    my &block = %!behaviors{n};
-    my @observations;
+    my $behaviors = Map.new(%!behaviors);
+    my $ctx = Map.new(%!context);
+    my &block = $behaviors{$name};
 
     without &block {
-      die X::BehaviorMissing.new(:experiment(self), :name(n))
+      die X::Test::Lab::BehaviorMissing.new(:experiment(self), :name($name));
     }
 
-    return &block() unless self.should-experiment-run();
+    return &block() unless self.should-experiment-run;
 
     with &!before { $_() }
 
-    %!behaviors.keys.pick(*).map: -> $key {
-      &block = %!behaviors{$key};
-      @observations.push: Test::Lab::Observation.new(
-        :name($key),
-        :experiment(self),
-        :&block);
-    }
-    my $control = @observations.first: *.name eq n;
-
-    my \result = Test::Lab::Result.new(
-      :experiment(self),
-      :@observations,
-      :$control
-    );
+    my $result = self.generate-result($name, $behaviors);
 
     try {
-      self.publish(result);
-      CATCH { default { self.died('publish', $_) } }
+      self.publish($result);
+      CATCH { default { self.thrown('publish', $_) } }
     }
 
-    if self.throw-on-mismatches.so && result.any-mismatched {
-      die X::Test::Lab::Mismatch.new(:$!name, :result(result));
+    if self.raise-on-mismatches() && $result.any-mismatched {
+      die X::Test::Lab::Mismatch.new(:$!name, :result($result));
     }
 
-    if $control.did-die { die $control.exception }
-    else { return $control.value }
+    die $result.control.exception if $result.control.thrown;
+    return $result.control.value;
   }
 
   #| Does a &!run-if sub allow the experiment to run?
@@ -174,54 +165,63 @@ class Test::Lab::Experiment {
   #| Rescues and reports exceptions in a run-if sub if
   #| they occur.
   method run-if-sub-allows {
-    try {
-      CATCH { default { self.died('run-if', $_); return False } }
-      &!run-if.defined ?? &!run-if() !! True;
-    }
+    CATCH { default { self.thrown('run-if', $_); return False } }
+    &!run-if.defined ?? &!run-if() !! True;
   }
 
   #| Determine whether or not an experiment should run.
   #|
   #| Catches and reports exceptions in the enabled method
   #| if they occur.
-  method should-experiment-run {
-    try {
-      CATCH { default { self.died('enabled', $_) } }
-      %!behaviors.elems > 1
-        && self.is-enabled
-        && self.run-if-sub-allows;
-    }
+  method should-experiment-run returns Bool {
+    CATCH { default { self.thrown('enabled', $_) } }
+    %!behaviors.elems > 1 && self.is-enabled && self.run-if-sub-allows;
   }
 
-  multi method throw-on-mismatches(Test::Lab::Experiment:U : Bool $flag?) {
-    with $flag {
-      Test::Lab::Experiment::<$throw-on-mismatches> = $flag
-    } else {
-      Test::Lab::Experiment::<$throw-on-mismatches> // False
-    }
+  multi method raise-on-mismatches(Test::Lab::Experiment:U : Bool $flag?) {
+    with $flag { Test::Lab::Experiment::<$raise-on-mismatches> = $flag }
+    else { Test::Lab::Experiment::<$raise-on-mismatches> // False }
   }
-  multi method throw-on-mismatches(Test::Lab::Experiment:D : Bool $flag?) {
-    with $flag {
-      $!throw-on-mismatches = $flag
-    } else {
-      $!throw-on-mismatches // Test::Lab::Experiment.throw-on-mismatches
-    }
+  multi method raise-on-mismatches(Test::Lab::Experiment:D : Bool $flag?) {
+    with $flag { $!raise-on-mismatches = $flag }
+    else { $!raise-on-mismatches // Test::Lab::Experiment.raise-on-mismatches }
   }
 
   #| Register a named behavior for this experiment
   method try(&sub, :$name = "candidate") {
     if %!behaviors{$name}.defined {
-      die X::BehaviorNotUnique.new(:experiment(self), :$name);
+      die X::Test::Lab::BehaviorNotUnique.new(:experiment(self), :$name);
     }
     %!behaviors{$name} = &sub;
   }
 
   #| Register the control behavior for this experiment;
-  method use(&sub) {
-    self.try: &sub, :name('control');
-  }
+  method use(&sub) { self.try: &sub, :name('control'); }
 
   method is-enabled { True }
 
   method publish($result) {  }
+
+
+
+  method generate-result($name, $behaviors) returns Test::Lab::Result:D {
+    my @observations;
+ 
+    $behaviors.keys.pick(*).map: -> $key {
+      my &block = $behaviors{$key};
+      @observations.push: Test::Lab::Observation.new(
+        :name($key),
+        :experiment(self),
+        :&block
+      );
+    }
+
+    my $control = @observations.first: *.name eq $name;
+
+    return Test::Lab::Result.new(
+      :experiment(self),
+      :@observations,
+      :$control
+    );
+  }
 }

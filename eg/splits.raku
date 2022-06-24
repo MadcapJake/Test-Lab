@@ -7,7 +7,7 @@ use Test::Lab::Experiment;
 my %results;
 
 class PartitionExperiment is Test::Lab::Experiment {
-  method new($name) { PartitionExperiment.bless(:$name) }
+  # method new($name) { PartitionExperiment.bless(:$name) }
   method is-enabled { True }
   method publish($result) {
     %results{$result.control.name}.push: $result.control.duration;
@@ -17,7 +17,7 @@ class PartitionExperiment is Test::Lab::Experiment {
   }
 }
 
-Test::Lab::<$experiment-class> = PartitionExperiment;
+Test::Lab::{'$experiment-class'} = PartitionExperiment;
 
 sub head-tail(@ls) {
   lab 'head-tail-partitions', -> $e {
@@ -54,7 +54,7 @@ sub head-tail(@ls) {
       @ls.keys.map: {@ls[0..$_, $_^..*] if $_ < @ls.end}
     }, :name<h>;
     $e.try: {
-      @ls.keys.map: {@ls.head($_), @ls.tail(@ls - $_) if $_}
+      @ls.keys.map: {[@ls.head($_), @ls.tail(@ls - $_)] if $_}
     }, :name<i>;
     $e.try: {
       @ls.rotor(|(1..^@ls Z (@ls-1…0) »=>» -@ls), ∞).rotor: 2
@@ -71,10 +71,12 @@ for ^100 {
   @parts = head-tail(@ls);
 }
 
+my %scoreboard;
 for %results.pairs.sort({ $^a.value cmp $^b.value }) -> $candidate {
   my $avg-dur = $candidate.value.reduce(*+*)/$candidate.value.elems;
-  say "{$candidate.key}\t$avg-dur"
+  %scoreboard.push: $candidate.key => $avg-dur;
 }
+for %scoreboard.pairs.sort({ $^a.value cmp $^b.value }).kv -> $k, $v { say "$k\t$v" };
 
 =begin Result
 control	0.00207062862973851

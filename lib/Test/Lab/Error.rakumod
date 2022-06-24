@@ -1,18 +1,20 @@
-unit module Test::Lab::Errors;
+unit module Test::Lab::Error;
 
-class X::BehaviorMissing is Exception is export {
+role X::Test::Lab::BadBehavior is Exception is export {
   has $.experiment;
   has $.name;
-  method message() { "{$!experiment.name} missing $!name behavior" }
+  method message { ... }
 }
 
-class X::BehaviorNotUnique is Exception is export {
-  has $.experiment is readonly;
-  has $.name is readonly;
+class X::Test::Lab::BehaviorMissing does X::Test::Lab::BadBehavior is export {
+  method message { "{$.experiment.name} missing $.name behavior" }
+}
+
+class X::Test::Lab::BehaviorNotUnique does X::Test::Lab::BadBehavior is export {
   method message { "{$.experiment.name} already has $.name behavior" }
 }
 
-class X::NoValue is Exception is export {
+class X::Test::Lab::NoValue does X::Test::Lab::BadBehavior is export {
   has $.observation is readonly;
   method message { "{$!observation.name} didn't return a value" }
 }
@@ -29,7 +31,7 @@ class X::Test::Lab::Mismatch is Exception is export {
     "\n";
   }
   sub fmt-obs($observation) {
-    "{$observation.name}:\n" ~ do if $observation.did-die {
+    "{$observation.name}:\n" ~ do if $observation.thrown {
       "  {$observation.exception.perl}\n" ~
       $observation.exception.backtrace.Str.lines.map({"    $_"}).join("\n")
     } else {

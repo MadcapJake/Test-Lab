@@ -12,7 +12,7 @@ has Str $.name is readonly;
 #| The value returned, if any.
 has $.value is readonly;
 
-#| The raised exception, if any.
+#| The thrown exception, if any.
 has $.exception is readonly;
 
 #| The Rat seconds elapsed.
@@ -32,26 +32,42 @@ submethod BUILD(:$!name, :$!experiment, :&block) {
 #| value.
 method cleaned-value { with $!value { $!experiment.clean-value($_) } }
 
-method equiv-to($other, &comparator?) {
-  my $values-are-equal = False;
-  my $both-dead = $other.did-die and self.did-die;
-  my $neither-dead = not $other.did-die and not self.did-die;
+#| Is this observation equivalent to another?
+#|
+#| other            - the other Observation in question
+#| comparator       - an optional comparison block. This observation's value and the
+#|                    other observation's value are passed to this to determine
+#|                    their equivalency. Block should return true/false.
+#| error_comparator - an optional comparison block. This observation's Error and the
+#|                    other observation's Error are passed to this to determine
+#|                    their equivalency. Block should return true/false.
+#|
+#| Returns true if:
+#|
+#| * The values of the observation are equal (using `==`)
+#| * The values of the observations are equal according to a comparison
+#|   block, if given
+#| * The exceptions thrown by the obeservations are equal according to the
+#|   error comparison block, if given.
+#| * Both observations thrown an exception with the same class and message.
+#|
+#| Returns false otherwise.
+method equiv-to($other, &comparator?, &error-comparator?) returns Bool {
+  return False unless $other ~~ Test::Lab::Observation:D;
 
-  if $neither-dead and &comparator.defined {
-    $values-are-equal = &comparator($!value, $other.value);
-  } else {
-    $values-are-equal = $!value === $other.value;
+  if self.thrown or $other.thrown {
+    with &error-comparator { return &error-comparator($!exception, $other.exception) }
+    else {
+      return ((.WHAT, .message) with $other.exception) eqv ($!exception.WHAT, $!exception.message);
+    }
   }
 
-  my $exceptions-are-equal = do given $other.exception {
-    $both-dead and .WHAT.isa($!exception.WHAT) and .message === $!exception.message;
-  }
-
-  $neither-dead && $values-are-equal or $both-dead && $exceptions-are-equal;
+  with &comparator { &comparator($!value, $other.value) }
+  else { $!value === $other.value }
 }
 
 method hash {
   [$!value, $!exception, self.WHAT].map({ .hash }).reduce: * +^ *;
 }
 
-method did-die { $!exception.defined }
+method thrown { $!exception.defined }
